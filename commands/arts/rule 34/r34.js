@@ -19,6 +19,9 @@ module.exports = {
                 .setDescription('Показать удалённые посты (по умолчанию нет)')),
 
     async execute(interaction) {
+        if (!interaction.channel.nsfw) {
+            return await interaction.reply('This command can only be used in NSFW channels.');
+        }
         // Устанавливаем значения по умолчанию
         const tags = interaction.options.getString('tags') ? interaction.options.getString('tags').replace(/,/g, '+') : 'p'; // по умолчанию 'p'
         const limit = interaction.options.getInteger('limit') || 200000; // по умолчанию 1

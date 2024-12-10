@@ -13,9 +13,6 @@ module.exports = {
     },
     async execute(interaction) {
         console.log('Command executed');
-        if (!interaction.channel.nsfw) {
-            return await interaction.reply('This command can only be used in NSFW channels.');
-        }
 
         await interaction.deferReply(); // Деферируем ответ, чтобы избежать ошибки unknown interaction
 
