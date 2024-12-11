@@ -1,2 +1,2 @@
 # BO-VI-bot
-discord bot for BO:VI team
+discord bot for BO:VI team and Avelc servers
