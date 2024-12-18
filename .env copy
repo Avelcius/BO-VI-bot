@@ -1,0 +1,8 @@
+token = ""; //paste you discord bot token
+CLIENT_ID = ""; //paste discord bot client id
+GUILD_ID = ""; //paste you guildid from discord
+OWNER_ID = ""; //paste you client id
+
+
+
+e621_apiKey = ""; //Paste you api key from e621

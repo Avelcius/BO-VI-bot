@@ -1,47 +1,47 @@
 const { EmbedBuilder } = require('discord.js');
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args)); // Динамический импорт для node-fetch
-//api   mndeA4sQ21DiE6TZWPgSRBvF
-const username = "Avelc";
-const apiKey = "mndeA4sQ21DiE6TZWPgSRBvF"; // Not an actual API key lol
-const e621Tags = [];
-
+const { SlashCommandBuilder } = require('@discordjs/builders');
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args)); // dynamic import for node-fetch
 
 module.exports = {
-    data: {
-        name: 'yiff',
-        description: 'Get a random post from e621 based on preset tags.',
-    },
+    data: new SlashCommandBuilder()
+        .setName('yiff')
+        .setDescription('Получить случайный пост с e621 с тегами')
+        .addStringOption(option =>
+            option.setName('tags')
+                .setDescription('Теги для поиска (разделяйте запятыми)')),
+   
     async execute(interaction) {
-        console.log('Command executed');
-        if (!interaction.channel.nsfw) {
-            return await interaction.reply('This command can only be used in NSFW channels.');
-        }
+        console.log('Команда выполнена');
 
-        await interaction.deferReply(); // Деферируем ответ, чтобы избежать ошибки unknown interaction
+        await interaction.deferReply(); // Деферируем ответ
+
+        // Получаем теги из команды
+        const tagsInput = interaction.options.getString('tags') || '';
+        const tags = tagsInput.replace(/,/g, '+'); // Заменяем запятые на '+'
 
         const fetchRandomPost = async () => {
             try {
-                const response = await fetch(`https://e621.net/posts/random.json?tags=${e621Tags.join(' ')}`, {
+                const response = await fetch(`https://e621.net/posts.json?tags=${tags}&limit=1`, {
                     headers: {
-                        'User-Agent': 'Aveke621_username on e621)', // Замените your_e621_username на ваш логин на e621
+                        'User-Agent': 'DiscordBot/1.0 (by your-username on e926)', 
                         'Accept': 'application/json'
-                    }
+                    },
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Network response was not ok: ${response.statusText}`);
-                }
-
-                const contentType = response.headers.get("content-type");
-                if (!contentType || !contentType.includes("application/json")) {
-                    throw new Error(`Expected JSON but got: ${contentType}`);
+                    throw new Error(`Ошибка сети: ${response.statusText}`);
                 }
 
                 const data = await response.json();
-                console.log('Fetched data:', data); // Логируем данные для отладки
-                return data.post;
+
+                if (!data.posts || data.posts.length === 0) {
+                    return null; // Если постов с указанными тегами нет
+                }
+
+                // Возвращаем первый пост
+                return data.posts[0];
             } catch (error) {
-                console.error('Error fetching posts from e621:', error.message);
+                console.error('Ошибка при запросе к e926:', error.message);
                 return null;
             }
         };
@@ -50,26 +50,19 @@ module.exports = {
 
         // Повторная попытка запроса в случае ошибки
         if (!post) {
-            console.log('Retrying request...');
-            post = await fetchRandomPost();
+            return await interaction.editReply('Посты с указанными тегами не найдены.');
         }
 
-        if (!post) {
-            return await interaction.editReply('No post found with the specified tags.');
-        }
+        const postUrl = `https://e621.net/posts/${post.id}`;
 
-        const postUrl = `https://e621.net/posts/${post.id}?tags=${e621Tags.join('+')}`;
-
-        // Логируем ссылку на пост в консоль
-        console.log(`Selected post: ${postUrl}`);
-
+        // Создаем Embed с данными поста
         const embed = new EmbedBuilder()
-            .setTitle(`Post ID: ${post.id}`)
+            .setTitle(`Пост ID: ${post.id}`)
             .setURL(postUrl)
             .setImage(post.file.url)
-            .setColor('#FF4500');
+            .setColor('#FF4500')
+            .setFooter({ text: `Теги: ${tagsInput || 'нет'}` });
 
         await interaction.editReply({ embeds: [embed] });
     },
 };
-
